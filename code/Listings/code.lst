@@ -1,0 +1,69 @@
+C51 COMPILER V9.54   CODE                                                                  01/11/2024 19:24:05 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE CODE
+OBJECT MODULE PLACED IN .\Objects\code.obj
+COMPILER INVOKED BY: F:\ruanjian\Keil5\C51\BIN\C51.EXE code.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listin
+                    -gs\code.lst) TABS(2) OBJECT(.\Objects\code.obj)
+
+line level    source
+
+   1          #include "uart.h"
+   2          #include "flow-light.h"
+   3          #include "adc0832.h"
+   4          #include "LCD1602.h"
+   5          #define uchar unsigned char
+   6          #define uint unsigned int
+   7          uchar code Zifu[]="0123456789";
+   8          
+   9          uchar adc = 0;
+  10          uint voltage = 0;
+  11          
+  12          char shuzi[]={0xc0,0xf9,0xa4,0xb0,
+  13                        0x99,0x92,0x82,0xf8,
+  14                        0x80,0x90,0x88,0x83,
+  15                        0xc6,0xa1,0x86,0x8e};
+  16          int value[4];
+  17          uchar LED_buffer1[16] = {" Voltage"};//电压显示
+  18          uchar LED_buffer2[16] = {" Now:     V "};
+  19          
+  20          void main()
+  21          {
+  22   1        LCD_Init();
+  23   1        LCD_Post(0,0); 
+  24   1        
+  25   1        while(1)
+  26   1        {
+  27   2          //读取adc值
+  28   2          adc = Get_AD_Result(0);
+  29   2          //将adc值换算成电压
+  30   2          voltage = adc * 500.0 / 255;
+  31   2          //取电压个位
+  32   2          LED_buffer2[5] = voltage / 100 + '0';
+  33   2          //小数点
+  34   2          LED_buffer2[6] = '.';
+  35   2          //取电压十分位
+  36   2          LED_buffer2[7] = voltage / 10 % 10 + '0';
+  37   2          //取电压百分位
+  38   2          LED_buffer2[8] = voltage % 10 + '0';
+  39   2          //显示字符串
+  40   2          LCD_Dis_Str(0, 0, &LED_buffer1[0]); 
+  41   2          LCD_Dis_Str(0, 1, &LED_buffer2[0]); 
+  42   2        }
+  43   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    132    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     59    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.54   CODE                                                                  01/11/2024 19:24:05 PAGE 2   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

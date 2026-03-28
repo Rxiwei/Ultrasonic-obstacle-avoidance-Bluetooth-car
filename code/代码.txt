@@ -1,0 +1,402 @@
+2 矩阵键盘
+#include <reg51.h>
+#include <intrins.h>
+#include "motor.h"
+#include "uart.h"
+#include "flow-light.h"
+#include "adc0832.h"
+#include "LCD1602.h"
+#define uchar unsigned char
+#define uint unsigned int
+uchar code Zifu[]="0123456789";
+
+uchar adc = 0;
+uint voltage = 0;
+
+char shuzi[]={0xc0,0xf9,0xa4,0xb0,
+							0x99,0x92,0x82,0xf8,
+							0x80,0x90,0x88,0x83,
+							0xc6,0xa1,0x86,0x8e};
+int value[4];
+uchar LED_buffer1[16] = {" Voltage"};//电压显示
+uchar LED_buffer2[16] = {" Now:     V "};
+
+void main()
+{
+	unsigned char num1=Button_0();
+	Seg_1(num1);
+	delay(500);
+	
+}
+3 LCD1602
+#include<reg52.h>
+#include<stdlib.h>
+#include<stdio.h>
+#include<intrins.h>
+#define uint unsigned int
+#define uchar unsigned char
+ 
+uint num,A_num,x,y=0;
+uint h,m,s,lcd_x=0,lcd_y=0;
+
+
+uchar code Zifu[]="0123456789";
+ 
+sbit LCD_EN = P1^3;
+sbit LCD_RS = P1^2;
+
+void delay_1ms(uchar x){
+	uchar i,j;
+	for(j=0;j<x;j++)
+		for(i=0;i<110;i++);
+}
+ 
+void write_command(uchar command){
+	LCD_RS = 0;
+	LCD_EN = 0;
+	P0 = command;
+	delay_1ms(2);
+	LCD_EN = 1;	 		
+	delay_1ms(2);
+	LCD_EN = 0;
+}
+ 
+void write_data(uchar f){
+	LCD_RS = 1;
+	LCD_EN = 0;
+	P0 = f;
+	delay_1ms(2);
+	LCD_EN = 1;
+	delay_1ms(2);
+	LCD_EN = 0;
+}
+ 
+void lcd_post(int X,int Y){			
+	write_command(0x80+X*(0x40)+Y);
+}
+
+//初始化设置
+void init(){
+	h=m=s=0;
+	num=A_num=0;
+ 
+	LCD_EN=0;
+	write_command(0x38);
+	write_command(0x0c);
+	write_command(0x01);
+ 
+	TMOD = 0x02;
+	TH0 = 6;
+	TL0 = 6;
+	EA = 1;
+	ET0 = 1;
+	TR0 = 1;
+ 
+	//初始化界面设置
+	lcd_post(0,0); write_data(Zifu[h/10]);
+	lcd_post(0,1); write_data(Zifu[h%10]);
+ 
+	lcd_post(0,2); write_data(':');
+ 
+	lcd_post(0,3); write_data(Zifu[m/10]);
+	lcd_post(0,4); write_data(Zifu[m%10]);
+ 
+	lcd_post(0,5); write_data(':');
+ 
+	lcd_post(0,6); write_data(Zifu[s/10]);
+	lcd_post(0,7); write_data(Zifu[s%10]);
+ 
+	//更改时间和日期
+	lcd_post(1,6); write_data(Zifu[2]);
+	lcd_post(1,7); write_data(Zifu[0]);
+	lcd_post(1,8); write_data(Zifu[2]);
+	lcd_post(1,9); write_data(Zifu[3]);
+ 
+	lcd_post(1,10); write_data('-');
+ 
+	lcd_post(1,11); write_data(Zifu[1]);
+	lcd_post(1,12); write_data(Zifu[1]);
+ 
+	lcd_post(1,13); write_data('-');
+ 
+	lcd_post(1,14); write_data(Zifu[1]);
+	lcd_post(1,15); write_data(Zifu[8]);
+}
+ 
+void main()
+{
+	init();
+	y = 0;
+	while(1){
+		if(num==3686){
+			num=0;
+			s++;
+			if(s==60){
+				s=0;
+				m++;
+				if(m==60){
+					m=0;
+					h++;
+					if(h==24)h=0;
+					lcd_post(0,0); write_data(Zifu[h/10]);
+					lcd_post(0,1); write_data(Zifu[h%10]);
+				}
+				lcd_post(0,3); write_data(Zifu[m/10]);
+				lcd_post(0,4); write_data(Zifu[m%10]);
+			}
+			lcd_post(0,6); write_data(Zifu[s/10]);
+			lcd_post(0,7); write_data(Zifu[s%10]);
+		}
+	}
+}
+ 
+void T0_time() interrupt 1
+{
+	num++;
+}
+4 ADC0832
+#include "uart.h"
+#include "flow-light.h"
+#include "adc0832.h"
+#include "LCD1602.h"
+#define uchar unsigned char
+#define uint unsigned int
+uchar code Zifu[]="0123456789";
+
+uchar adc = 0;
+uint voltage = 0;
+
+char shuzi[]={0xc0,0xf9,0xa4,0xb0,
+							0x99,0x92,0x82,0xf8,
+							0x80,0x90,0x88,0x83,
+							0xc6,0xa1,0x86,0x8e};
+int value[4];
+uchar LED_buffer1[16] = {" Voltage"};//电压显示
+uchar LED_buffer2[16] = {" Now:     V "};
+
+void main()
+{
+	LCD_Init();
+	LCD_Post(0,0); 
+	
+	while(1)
+	{
+		//读取adc值
+		adc = Get_AD_Result(0);
+		//将adc值换算成电压
+		voltage = adc * 500.0 / 255;
+		//取电压个位
+		LED_buffer2[5] = voltage / 100 + '0';
+		//小数点
+		LED_buffer2[6] = '.';
+		//取电压十分位
+		LED_buffer2[7] = voltage / 10 % 10 + '0';
+		//取电压百分位
+		LED_buffer2[8] = voltage % 10 + '0';
+		//显示字符串
+		LCD_Dis_Str(0, 0, &LED_buffer1[0]);	
+		LCD_Dis_Str(0, 1, &LED_buffer2[0]);	
+	}
+}
+
+5 智能小车
+#include <reg51.h>
+#include <intrins.h>
+
+#define uchar unsigned char
+#define uint unsigned int
+	
+#define Left_moto_go      {M1=1,M2=0;}  //左电机向前走
+#define Left_moto_back    {M1=0,M2=1;} 	//左边电机向后转
+#define Left_moto_Stop    {M1=0,M2=0;}         //左边电机停转                     
+#define Right_moto_go     {M3=1,M4=0;}	//右边电机向前走
+#define Right_moto_back   {M3=0,M4=1;}	//右边电机向后走
+#define Right_moto_Stop   {M3=0,M4=0;}      	//右边电机停转  
+
+//PWM波输入引脚
+sbit  PWM_A=P2^4;
+sbit  PWM_B=P2^5;
+//电机驱动引脚
+sbit  M1=P2^1;
+sbit  M2=P2^0;
+sbit  M3=P2^2;
+sbit  M4=P2^3;
+
+//超声波引脚
+sbit Echo = P1^0;				//超声波模块 Echo端接单片机P2.5
+sbit Trig = P1^1;				//超声波模块 Trig端接单片机P2.6
+
+uint time = 0;   //测距数据，距离所用时间变量							   
+uint Distance = 0;												//距离
+uint counter=0;
+
+//前进
+void run();
+//后退
+void back();
+//停车
+void stop();
+//左转
+void left();
+//右转
+void right();
+//超声波
+void hcsr04();
+//延时函数
+void delay(uint i);
+
+uchar i=0;
+
+
+void main()
+{
+	TMOD=0x21;                         //设置T1为工作方式2
+	TH1=0xfd;                        //装入初值，比特率为9600bps
+	TL1=0xfd;
+	TH0=0xee;                        
+	TL0=0x00;
+	
+	ET0=1;
+	TR0=1;
+	TR1=1;                              //开启T1
+	REN=1;                             //接收允许
+
+	SM0=0;                             //方式1
+	SM1=1;
+
+	EA=1;                               //开全局中断
+	ES=1;                                //开串口中断
+	
+	while(1){
+		hcsr04();
+		
+	}
+}
+
+
+//延时函数
+void delay(uint i)
+{
+	uchar t;
+	while(i--)
+	{
+		for(t=0;t<120;t++);
+	}
+}
+
+//PWM波输出
+void timer0() interrupt 1{
+	
+	TH0=0xee;
+	TL0=0x00;
+	i++;
+	if(i>4){
+		PWM_A=1;
+		PWM_B=1;
+	}
+	else{
+		PWM_A=0;
+		PWM_B=0;
+	}
+	
+	
+	
+	if(i==8) i=0;
+}
+//串口蓝牙控制
+void Uart() interrupt 4
+{
+	unsigned char receive_data;
+	receive_data=SBUF;        //取出接受到的数据
+	if(receive_data == '0'){
+		stop();
+		}
+	else if(receive_data == '1'){
+		run();
+		}
+	else if(receive_data == '2'){
+		left();
+		}
+	else if(receive_data == '3'){
+		right();
+		}
+	else if(receive_data == '4'){
+		back();
+		}
+		
+	RI=0;			  //清除接受中断标志位
+ 
+    //收到的数据是date
+	
+}
+
+//超声波初始化
+void hcsr04()
+{
+	TR0=0;
+	Trig=1;			              
+	_nop_(); 
+	_nop_(); 
+	_nop_(); 
+	_nop_(); 
+	_nop_();
+	_nop_(); 
+	_nop_(); 
+	_nop_(); 
+	_nop_(); 
+	_nop_(); 
+	_nop_(); 						//等待大于10us
+	Trig=0;
+	while(!Echo);				//当Echo为零时等待
+	TR0=1;			    			//开启计数
+	while(Echo);					//当Echo为1时，计时并等待
+	TR0=0;								//关闭计时
+	
+	time=TH0*256+TL0;		//定时器的值放在time中
+	TH0=0;
+	TL0=0;					//清零定时器0
+	Distance=(time*1.8)/100;      //计算距离
+	
+	TR0=1;	
+	
+	if(Distance<20){
+		back();
+		delay(20);
+		stop();
+	} 
+}
+
+//计算距离
+void count(void)
+{
+	time=TH0*256+TL0;		//定时器的值放在time中
+	TH0=0;
+	TL0=0;					//清零定时器0
+	Distance=(time*1.8)/100;      //计算距离
+}
+
+//前进
+void run(){
+	Left_moto_go;
+	Right_moto_go;
+}
+//后退
+void back(){
+	Left_moto_back;
+	Right_moto_back;
+}
+//停车
+void stop(){
+	Left_moto_Stop;
+	Right_moto_Stop;
+}
+//左转
+void left(){
+	Left_moto_back;
+	Right_moto_go;
+}
+//右转
+void right(){
+	Left_moto_go;
+	Right_moto_back;
+}

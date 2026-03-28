@@ -1,0 +1,94 @@
+C51 COMPILER V9.54   ADC0832                                                               01/11/2024 19:24:05 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE ADC0832
+OBJECT MODULE PLACED IN .\Objects\adc0832.obj
+COMPILER INVOKED BY: F:\ruanjian\Keil5\C51\BIN\C51.EXE adc0832.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Lis
+                    -tings\adc0832.lst) TABS(2) OBJECT(.\Objects\adc0832.obj)
+
+line level    source
+
+   1          #include "adc0832.h"
+   2          
+   3          sbit CS = P1^7;//片选使能，低电平有效
+   4          sbit CLK= P1^4;//芯片时钟输入
+   5          sbit DIO = P1^5;//数据输入DI与输出DO
+   6          unsigned char Get_AD_Result(bit channel)
+   7          {
+   8   1        uchar i,dat0=0,dat1=0;
+   9   1        CS=0;     //片选信号置低，启动AD转换芯片
+  10   1        CLK=0;      //时钟置低平
+  11   1        
+  12   1        DIO=1;      //开始信号为高电平
+  13   1        Delay_2us();
+*** WARNING C206 IN LINE 13 OF adc0832.c: 'Delay_2us': missing function-prototype
+  14   1        CLK=1;      //产生一个正脉冲,在时钟上升沿，输入开始信号（DI=1）
+  15   1        Delay_2us();
+  16   1        CLK=0;      //第1个时钟下降沿
+  17   1        DIO=1;
+  18   1        Delay_2us();
+  19   1        
+  20   1        CLK=1;        // 第2个下降沿输入DI=1，表示双通道单极性输入
+  21   1        Delay_2us();    
+  22   1        CLK=0;  
+  23   1        DIO=channel;         // 第3个下降沿,设置DI，选择通道;
+  24   1        Delay_2us();
+  25   1        CLK=1;
+  26   1        Delay_2us();  
+  27   1        
+  28   1        CLK=0;
+  29   1        DIO=1;          //第四个下降沿之前，DI置高，准备接收数 
+  30   1        Delay_2us();  
+  31   1        for(i=0;i<8;i++)                 //第4~11共8个下降沿读数据（MSB->LSB）
+  32   1        {
+  33   2          CLK=1;
+  34   2          Delay_2us();
+  35   2          CLK=0;
+  36   2          Delay_2us();
+  37   2          dat0=dat0<<1|DIO;
+  38   2        }
+  39   1        for(i=0;i<8;i++)                 //第11~18共8个下降沿读数据（LSB->MSB）
+  40   1        {
+  41   2          dat1=dat1|((uchar)(DIO)<<i);
+  42   2          CLK=1;
+  43   2          Delay_2us();
+  44   2          CLK=0;
+  45   2          Delay_2us();
+  46   2        } 
+  47   1        CS=1;         
+  48   1        return (dat0==dat1)?dat0:0;     //判断dat0与dat1是否相等
+  49   1      }
+  50          
+  51          /*
+  52          LCD_Init();
+  53          LCD_Post(0,0); 
+C51 COMPILER V9.54   ADC0832                                                               01/11/2024 19:24:05 PAGE 2   
+
+  54          
+  55          while(1)
+  56          {
+  57            adc = Get_AD_Result(0);//读取adc值
+  58            voltage = adc * 500.0 / 255;//将adc值换算成电压
+  59            LED_buffer2[10] = voltage / 100 + '0';    //取电压个位
+  60            LED_buffer2[11] = '.';//小数点
+  61            LED_buffer2[12] = voltage / 10 % 10 + '0';  //取电压十分位
+  62            LED_buffer2[13] = voltage % 10 + '0'; //取电压百分位    
+  63            LCD_Dis_Str(0, 0, &LED_buffer1[0]); //显示字符串
+  64            LCD_Dis_Str(0, 1, &LED_buffer2[0]); 
+  65          }
+  66          */
+  67          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    139    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

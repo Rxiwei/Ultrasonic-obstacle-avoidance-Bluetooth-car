@@ -1,0 +1,66 @@
+C51 COMPILER V9.54   BOOTH                                                                 01/11/2024 19:24:03 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE BOOTH
+OBJECT MODULE PLACED IN .\Objects\booth.obj
+COMPILER INVOKED BY: F:\ruanjian\Keil5\C51\BIN\C51.EXE booth.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\booth.lst) TABS(2) OBJECT(.\Objects\booth.obj)
+
+line level    source
+
+   1          #include "booth.h"
+   2          #include "motor.h"
+   3          //蓝牙初始化
+   4          void booth_int(void){
+   5   1        SCON = 0x50;  // SCON: 模式1, 8-bit UART, 使能接收 
+   6   1        TMOD |= 0x20;
+   7   1        TH1=0xfd;     //波特率9600 初值
+   8   1        TL1=0xfd;
+   9   1        TR1= 1;
+  10   1        EA = 1;     //开总中断
+  11   1        ES= 1;    //打开串口中断
+  12   1        IP=00010000;
+  13   1      }
+  14          //接收蓝牙信号
+  15          void BluetoothControl(void)  
+  16          {
+  17   1        unsigned char receive_data;
+  18   1        
+  19   1        EA = 0;
+  20   1        
+  21   1        if(RI == 1) {     
+  22   2          
+  23   2          receive_data = SBUF;
+  24   2        
+  25   2          if(receive_data == '1'){
+  26   3            run();
+  27   3          }
+  28   2          else if(receive_data == '2'){
+  29   3            back();
+  30   3          }
+  31   2          else if(receive_data == '3'){
+  32   3            left();
+  33   3          }
+  34   2          else if(receive_data == '4'){
+  35   3            right(); 
+  36   3          }
+  37   2          else if(receive_data == '0'){
+  38   3            stop();
+  39   3          } 
+  40   2        }
+  41   1        EA = 1;
+  42   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     81    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

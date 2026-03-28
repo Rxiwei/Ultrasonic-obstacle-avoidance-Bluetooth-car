@@ -1,0 +1,12 @@
+".\Objects\STARTUP.obj",
+".\Objects\delay.obj",
+".\Objects\booth.obj",
+".\Objects\motor.obj",
+".\Objects\timer.obj",
+".\Objects\uart.obj",
+".\Objects\flow-light.obj",
+".\Objects\LCD1602.obj",
+".\Objects\adc0832.obj",
+".\Objects\code.obj" 
+TO ".\Objects\ganfan-ganfan" 
+PRINT(".\Listings\ganfan-ganfan.m51") RAMSIZE(256) 
